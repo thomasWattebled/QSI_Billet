@@ -1,6 +1,7 @@
 <h1> Billet : </h1>
 
-/ticket POST (Billet US2) :{
+<h3> /ticket POST </h3> (Billet US2) :
+
       ticketId : UUID,
       concertId* : UUID,
       userId* : UUID,
@@ -8,23 +9,24 @@
       used : bool (Billet US4),
       repayed : bool (Billet US6),
       canceled : bool (Concert RG1)
-}
 
-/ticket PUT (Billet US3) :{
+
+<h3> /ticket PUT (Billet US3) :</h3>
+
       ticketId : UUID
       concertId* : UUID
       userId* : UUID
-}
-
-ticket/idTicket GET
-/tickets/idConcert GET (Billet US1)
-tickets/userId GET (Billet US5)
-ticket/repay/ticketId POST (Billet US6)
 
 
+<h3> ticket/idTicket GET </h3>
+<h3> /tickets/idConcert GET (Billet US1) </h3>
+<h3>tickets/userId GET (Billet US5) </h3>
+<h3>ticket/repay/ticketId POST (Billet US6) </h3>
 
 
-<Strong>User Stories </Strong>
+
+
+<h2>User Stories </h2>
 
 - Story 1 : En tant qu’Administrateur, je peux représenter les billets de mon concert. 
 - Story 2 : En tant qu’Acheteur, je peux acheter un billet, afin d’assister au concert 
@@ -39,7 +41,8 @@ utilisé pour payer mon billet
 
 
 
-<Strong> Règles de gestion </Strong> 
+<h2> Règles de gestion </h2>
+ 
 - RG1 : les identifiants techniques en base de données doivent être au format UUID 
 - RG2 : le remboursement du billet n’est possible que jusqu'à 48h avant le début du concert 
 - RG3 : le remboursement d’un billet permet à un autre acheteur de racheter la place (= la place 
