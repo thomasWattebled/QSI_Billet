@@ -45,4 +45,23 @@ export class TicketsController {
     }
   }
 
+  async useTicket(req: Request, res: Response) {
+    const { ticketId } = req.params;
+    try {
+      const ticket = await ticketsService.useTicket(ticketId);
+      res.status(200).json(ticket);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Billet non trouvé') {
+          res.status(404).json({ message: error.message });
+        } else if (error.message === 'Billet déjà utilisé') {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: 'Erreur lors de l utilisation du billet', error: error.message });
+        }
+      } else {
+        res.status(500).json({ message: 'Erreur inconnue lors de l utilisation du billet' });
+      }
+    }
+  }
 }

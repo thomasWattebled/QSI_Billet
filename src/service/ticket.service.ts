@@ -88,5 +88,29 @@ export class TicketsService {
     );
   }
 
+  async useTicket(ticketId: string): Promise<Ticket> {
+    const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
+    if (!ticket) {
+      throw new Error('Billet non trouvé');
+    }
+    if (ticket.used) {
+      throw new Error('Billet déjà utilisé');
+    }
+    const updatedTicket = await prisma.ticket.update({
+      where: { ticketId },
+      data: { used: true },
+    });
+    return new Ticket(
+      updatedTicket.ticketId,
+      updatedTicket.concertId,
+      updatedTicket.ownerId,
+      updatedTicket.expired,
+      updatedTicket.used,
+      updatedTicket.repayed,
+      updatedTicket.canceled,
+      updatedTicket.createdAt,
+    );
+  }
+
 
 }
