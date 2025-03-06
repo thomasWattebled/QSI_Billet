@@ -7,6 +7,18 @@
 generator client {
   provider = "prisma-client-js"
 }
+model User {
+  userId  String   @id @default(uuid())
+  name    String
+  tickets Ticket[]
+}
+
+model Concert {
+  id      String   @id @default(uuid())
+  name    String
+  date    DateTime
+  tickets Ticket[]
+}
 
 model Ticket {
   ticketId   String   @id @default(uuid())
