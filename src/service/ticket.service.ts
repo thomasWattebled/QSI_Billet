@@ -113,4 +113,33 @@ export class TicketsService {
   }
 
 
+  async transferTicket(ticketId: string, newOwnerId: string): Promise<Ticket> {
+    const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
+    if (!ticket) {
+      throw new Error('Billet non trouvé');
+    }
+
+    const newOwner = await prisma.user.findUnique({ where: { userId: newOwnerId } });
+    if (!newOwner) {
+      throw new Error('Nouveau propriétaire invalide');
+    }
+
+    const updatedTicket = await prisma.ticket.update({
+      where: { ticketId },
+      data: { ownerId: newOwnerId },
+    });
+
+    return new Ticket(
+      updatedTicket.ticketId,
+      updatedTicket.concertId,
+      updatedTicket.ownerId,
+      updatedTicket.expired,
+      updatedTicket.used,
+      updatedTicket.repayed,
+      updatedTicket.canceled,
+      updatedTicket.createdAt,
+    );
+  }
+
+
 }

@@ -15,6 +15,10 @@ app.use(express.json());
 // Routes pour la gestion des billets
 app.post('/tickets/purchase', (req, res) => ticketsController.purchaseTicket(req, res));
 app.post('/tickets/:ticketId/refund', (req, res) => ticketsController.refundTicket(req, res));
+app.post('/tickets/:ticketId/use', (req, res) => ticketsController.useTicket(req, res));
+app.post('/tickets/:ticketId/transfer', (req, res) => ticketsController.transferTicket(req, res));
+
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });

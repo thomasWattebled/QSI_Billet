@@ -64,4 +64,28 @@ export class TicketsController {
       }
     }
   }
+
+  async transferTicket(req: Request, res: Response) {
+    const { ticketId } = req.params;
+    const { newOwnerId } = req.body;
+
+    try {
+      const ticket = await ticketsService.transferTicket(ticketId, newOwnerId);
+      res.status(200).json(ticket);
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message === 'Billet non trouvé') {
+          res.status(404).json({ message: error.message });
+        } else if (error.message === 'Nouveau propriétaire invalide') {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: 'Erreur lors du transfert du billet', error: error.message });
+        }
+      } else {
+        res.status(500).json({ message: 'Erreur inconnue lors du transfert du billet' });
+      }
+    }
+  }
+
+
 }
