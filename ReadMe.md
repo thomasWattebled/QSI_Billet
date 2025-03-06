@@ -47,3 +47,4 @@ utilisé pour payer mon billet
 - RG2 : le remboursement du billet n’est possible que jusqu'à 48h avant le début du concert 
 - RG3 : le remboursement d’un billet permet à un autre acheteur de racheter la place (= la place 
 est de nouveau disponible à l’achat) 
+
