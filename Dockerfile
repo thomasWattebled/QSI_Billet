@@ -6,9 +6,6 @@ ENV POSTGRES_USER admin
 ENV POSTGRES_PASSWORD admin
 ENV POSTGRES_DB billetDB
 
-# Optional: Copy initialization scripts if you need to create tables, insert data, etc.
-COPY init.sql /docker-entrypoint-initdb.d/
-
 # Expose the PostgreSQL port
 EXPOSE 6000
 

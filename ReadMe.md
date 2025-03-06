@@ -1,5 +1,30 @@
 <h1> Billet : </h1>
 
+
+<h2> Set up the project </h2>
+
+<h3>Create the database</h3>
+
+In the source directory (with the Dockerfile) :
+
+      docker build -t billet-postgre-db .
+
+<h3>Install the node js project</h3>
+
+In the source directory (with app.js) :
+
+      npm install
+
+<h2> Run the project </h2>
+
+      docker run -p 6000:6000 -e POSTGRES_PASSWORD=admin -d billet-postgre-db
+
+      npm run dev
+
+Then do your request on http://localhost:3030
+
+
+
 <h3> /ticket POST </h3> (Billet US2) :
 
       ticketId : UUID,
