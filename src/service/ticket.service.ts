@@ -2,6 +2,7 @@ import amqp from 'amqplib';
 import { Ticket } from '../entity/ticket.entity';
 import { TicketsRepository } from '../repository/ticket.repository';
 import { PrismaClient } from '@prisma/client';
+import { sendConcertRequest, sendOwnerRequest} from '../rabbitMQ/producer'
 
 const RABBITMQ_URL = 'amqp://localhost';
 const QUEUE_NAME = 'concert';
@@ -17,7 +18,7 @@ export class TicketsService {
 
   async purchaseTicket(concertId: string, userId: string): Promise<Ticket> {
     // Vérifier si le concert existe via RabbitMQ
-    const concert = await this.getConcertInfo(concertId);
+    const concert = await sendConcertRequest(concertId);
     if (!concert) {
       throw new Error('Concert non trouvé');
     }
@@ -26,41 +27,6 @@ export class TicketsService {
     return ticket;
   }
 
-  async getConcertInfo(concertId: string): Promise<any> {
-    try {
-      // Se connecter à RabbitMQ
-      const connection = await amqp.connect(RABBITMQ_URL);
-      const channel = await connection.createChannel();
-      const replyQueue = await channel.assertQueue('', { exclusive: true });
-
-      // Publier la demande de concert
-      channel.sendToQueue(QUEUE_NAME, Buffer.from(concertId), {
-        replyTo: replyQueue.queue,
-      });
-
-      console.log(`Demande envoyée pour le concert ID : ${concertId}`);
-
-      // Attendre la réponse
-      const concert = await new Promise((resolve, reject) => {
-        channel.consume(replyQueue.queue, (message) => {
-          if (message) {
-            const concert = JSON.parse(message.content.toString());
-            channel.ack(message);
-            resolve(concert);
-          }
-        }, { noAck: false });
-      });
-
-      setTimeout(() => {
-        connection.close();
-      }, 500);
-
-      return concert;
-    } catch (error) {
-      console.error('Erreur lors de la récupération des informations du concert :', error);
-      throw error;
-    }
-  }
 
   async refundTicket(ticketId: string): Promise<Ticket> {
     const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
@@ -119,7 +85,7 @@ export class TicketsService {
       throw new Error('Billet non trouvé');
     }
 
-    const newOwner = await prisma.user.findUnique({ where: { userId: newOwnerId } });
+    const newOwner = await await sendOwnerRequest(newOwnerId);
     if (!newOwner) {
       throw new Error('Nouveau propriétaire invalide');
     }
