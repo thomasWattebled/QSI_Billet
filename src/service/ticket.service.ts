@@ -1,11 +1,8 @@
-import amqp from 'amqplib';
 import { Ticket } from '../entity/ticket.entity';
 import { TicketsRepository } from '../repository/ticket.repository';
 import { PrismaClient } from '@prisma/client';
 import { sendConcertRequest, sendOwnerRequest} from '../rabbitMQ/producer'
 
-const RABBITMQ_URL = 'amqp://localhost';
-const QUEUE_NAME = 'concert';
 const prisma = new PrismaClient();
 
 
@@ -37,21 +34,12 @@ export class TicketsService {
       throw new Error('Billet déjà remboursé ou annulé ou tuilisé');
     }
 
-    const updatedTicket = await prisma.ticket.update({
+    const updatedTicket:Ticket = await prisma.ticket.update({
       where: { ticketId },
       data: { repayed: true, canceled: true },
     });
 
-    return new Ticket(
-      updatedTicket.ticketId,
-      updatedTicket.concertId,
-      updatedTicket.ownerId,
-      updatedTicket.expired,
-      updatedTicket.used,
-      updatedTicket.repayed,
-      updatedTicket.canceled,
-      updatedTicket.createdAt,
-    );
+    return updatedTicket;
   }
 
   async useTicket(ticketId: string): Promise<Ticket> {
@@ -62,20 +50,11 @@ export class TicketsService {
     if (ticket.used) {
       throw new Error('Billet déjà utilisé');
     }
-    const updatedTicket = await prisma.ticket.update({
+    const updatedTicket:Ticket = await prisma.ticket.update({
       where: { ticketId },
       data: { used: true },
     });
-    return new Ticket(
-      updatedTicket.ticketId,
-      updatedTicket.concertId,
-      updatedTicket.ownerId,
-      updatedTicket.expired,
-      updatedTicket.used,
-      updatedTicket.repayed,
-      updatedTicket.canceled,
-      updatedTicket.createdAt,
-    );
+    return updatedTicket;
   }
 
 
@@ -90,21 +69,13 @@ export class TicketsService {
       throw new Error('Nouveau propriétaire invalide');
     }
 
-    const updatedTicket = await prisma.ticket.update({
+    await prisma.ticket.update({
       where: { ticketId },
-      data: { ownerId: newOwnerId },
+      data: { canceled: true },
     });
 
-    return new Ticket(
-      updatedTicket.ticketId,
-      updatedTicket.concertId,
-      updatedTicket.ownerId,
-      updatedTicket.expired,
-      updatedTicket.used,
-      updatedTicket.repayed,
-      updatedTicket.canceled,
-      updatedTicket.createdAt,
-    );
+    const newTicket:Ticket = await this.ticketsRepository.createTicket(ticket.concertId, newOwnerId);
+    return newTicket;
   }
 
 
