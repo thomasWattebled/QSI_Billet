@@ -33,7 +33,7 @@ model Concert {
   location   String
   date       DateTime
   maxTickets Int
-  deletedAt  DateTime? @default(null)
+  deletedAt  DateTime?
   tickets    Ticket[]
 }
 
@@ -44,6 +44,7 @@ model Ticket {
   status     TicketStatus @default(CREATED)
   isAvailable Boolean     @default(true)
   createdAt  DateTime     @default(now())
+  deletedAt  DateTime?
   updatedAt  DateTime     @updatedAt
   concert    Concert      @relation(fields: [concertId], references: [id])
   owner      User         @relation(fields: [ownerId], references: [userId])
