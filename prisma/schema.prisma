@@ -7,6 +7,20 @@
 generator client {
   provider = "prisma-client-js"
 }
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TicketStatus {
+  CREATED
+  USED
+  REFUNDED
+  CANCELED
+  EXPIRED
+}
+
 model User {
   userId  String   @id @default(uuid())
   name    String
@@ -14,26 +28,23 @@ model User {
 }
 
 model Concert {
-  id      String   @id @default(uuid())
-  name    String
-  date    DateTime
-  tickets Ticket[]
+  id         String   @id @default(uuid())
+  name       String
+  location   String
+  date       DateTime
+  maxTickets Int
+  deletedAt  DateTime? @default(null)
+  tickets    Ticket[]
 }
 
 model Ticket {
-  ticketId   String   @id @default(uuid())
+  ticketId   String       @id @default(uuid())
   concertId  String
   ownerId    String
-  expired    Boolean  @default(false)
-  used       Boolean  @default(false)
-  repayed    Boolean  @default(false)
-  canceled   Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  concert    Concert  @relation(fields: [concertId], references: [id])
-  owner      User     @relation(fields: [ownerId], references: [userId])
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  status     TicketStatus @default(CREATED)
+  isAvailable Boolean     @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  concert    Concert      @relation(fields: [concertId], references: [id])
+  owner      User         @relation(fields: [ownerId], references: [userId])
 }
