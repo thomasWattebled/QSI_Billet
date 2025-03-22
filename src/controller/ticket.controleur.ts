@@ -1,17 +1,29 @@
 import { Request, Response } from 'express';
 import { TicketsService } from '../service/ticket.service';
+import { validateTokenWithUserService } from '../rabbitMQ/producer';
 
 const ticketsService = new TicketsService();
 
 export class TicketsController {
   async purchaseTicket(req: Request, res: Response) {
-    const { concertId, userId } = req.body;
+    const { concertId } = req.body;
+    const token = req.headers.authorization?.split(' ')[1]; 
 
+    if (!token) {
+      return res.status(401).json({ message: 'Token manquant' });
+    }
     try {
+      const isValid = await validateTokenWithUserService(token);
+
+      if (!isValid) {
+        return res.status(401).json({ message: 'Token invalide' });
+      }
+      const userId = isValid.userId;
+
       const ticket = await ticketsService.purchaseTicket(concertId, userId);
       res.status(201).json(ticket);
     } catch (error) {
-      if(error instanceof Error){
+      if(error instanceof Error){ 
         if (error.message === 'Concert non trouvé') {
           res.status(404).json({ message: error.message });
         } else {
@@ -86,6 +98,9 @@ export class TicketsController {
       }
     }
   }
+
+
+
 
 
 }

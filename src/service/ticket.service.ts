@@ -1,7 +1,7 @@
 import { Ticket } from '../entity/ticket.entity';
 import { TicketRepository } from '../repository/ticket.repository';
-import { PrismaClient, TicketStatus } from '@prisma/client';
-import { sendConcertRequest, sendOwnerRequest } from '../rabbitMQ/producer';
+import { PrismaClient,TicketStatus} from '@prisma/client';
+import { sendConcertRequest, sendOwnerRequest, processPayment } from '../rabbitMQ/producer';
 
 const prisma = new PrismaClient();
 
@@ -26,8 +26,17 @@ export class TicketsService {
 
     if (!concertData) throw new Error('Concert introuvable ou supprimé');
     if (concertData.tickets.length >= concertData.maxTickets) throw new Error('Plus de billets disponibles');
+    const price = concert.price;
+    const ticket =await this.ticketsRepository.createTicket(concertId, userId, price);
+    const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
 
-    return this.ticketsRepository.createTicket(concertId, userId);
+    if (!paymentSuccess) {
+      await this.ticketsRepository.deleteTicket(ticket.ticketId);
+      throw new Error('Paiement échoué');
+    }
+
+    return ticket;
+
   }
 
   /**
@@ -41,10 +50,13 @@ export class TicketsService {
    * Utilisation d'un billet à l'entrée du concert
    */
   async useTicket(ticketId: string): Promise<Ticket> {
-    const ticket = await prisma.ticket.findUnique({ where: { ticketId, deletedAt: null } });
+    const ticket = await prisma.ticket.findUnique({
+      where: { ticketId, deletedAt: null },
+    });
+  
     if (!ticket) throw new Error('Billet non trouvé');
     if (ticket.status !== TicketStatus.CREATED) throw new Error('Billet invalide pour l\'entrée');
-
+  
     return prisma.ticket.update({
       where: { ticketId },
       data: { status: TicketStatus.USED }

@@ -1,4 +1,5 @@
-import { TicketStatus } from '../enum/ticket-status.enum';
+import { TicketStatus } from "@prisma/client";
+
 
 export class Ticket {
     ticketId: string;
@@ -6,6 +7,7 @@ export class Ticket {
     ownerId: string;
     status: TicketStatus;
     isAvailable: boolean;
+    price: number | null;
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date | null;
@@ -17,8 +19,9 @@ export class Ticket {
         status: TicketStatus,
         isAvailable: boolean,
         createdAt: Date,
+        price: number | null,
         updatedAt: Date,
-        deletedAt?: Date | null
+        deletedAt?: Date | null | undefined
     ) {
         this.ticketId = ticketId;
         this.concertId = concertId;
@@ -26,6 +29,7 @@ export class Ticket {
         this.status = status;
         this.isAvailable = isAvailable;
         this.createdAt = createdAt;
+        this.price = price;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt || null;
     }

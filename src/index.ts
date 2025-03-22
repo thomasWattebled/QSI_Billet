@@ -12,7 +12,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Routes pour la gestion des billets
-app.post('/tickets/purchase', (req, res) => ticketsController.purchaseTicket(req, res));
+app.post('/tickets/purchase/', async function(req :Request, res: Response) {ticketsController.purchaseTicket(req, res)});
 app.post('/tickets/:ticketId/refund', (req, res) => ticketsController.refundTicket(req, res));
 app.post('/tickets/:ticketId/use', (req, res) => ticketsController.useTicket(req, res));
 app.post('/tickets/:ticketId/transfer', (req, res) => ticketsController.transferTicket(req, res));

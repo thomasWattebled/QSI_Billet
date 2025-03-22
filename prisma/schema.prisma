@@ -32,6 +32,7 @@ model Concert {
   name       String
   location   String
   date       DateTime
+  price      Float?
   maxTickets Int
   deletedAt  DateTime?
   tickets    Ticket[]
@@ -45,6 +46,7 @@ model Ticket {
   isAvailable Boolean     @default(true)
   createdAt  DateTime     @default(now())
   deletedAt  DateTime?
+  price      Float?
   updatedAt  DateTime     @updatedAt
   concert    Concert      @relation(fields: [concertId], references: [id])
   owner      User         @relation(fields: [ownerId], references: [userId])

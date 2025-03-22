@@ -1,8 +1,12 @@
 import amqp from 'amqplib';
 
 const RABBITMQ_URL = 'amqp://localhost'; 
-const QUEUE_NAME_CONCERT = 'concert'; // Nom de la file d'attente
+const QUEUE_NAME_CONCERT = 'concert';
+const QUEUE_NAME_JWT = 'validate_jwt';
+ // Nom de la file d'attente
 const QUEUE_NAME_OWNER = 'user';
+const QUEUE_NAME_PAYMENT = 'process_payment';
+
 
 export async function sendConcertRequest(concertId: string):Promise<any> {
   try {
@@ -63,4 +67,71 @@ export async function sendOwnerRequest(ownerId: string):Promise<any> {
   } catch (error) {
     console.error('Erreur lors de l\'envoi du message à RabbitMQ :', error);
   }
+}
+
+export async function validateTokenWithUserService(token: string): Promise<{ userId: string } | null> {
+  const connection = await amqp.connect(RABBITMQ_URL);
+  const channel = await connection.createChannel();
+
+  // Déclarer une file d'attente de réponse temporaire
+  const replyQueue = await channel.assertQueue('', { exclusive: true });
+
+  // Envoyer la requête de validation du token
+  channel.sendToQueue(QUEUE_NAME_JWT, Buffer.from(token), {
+    replyTo: replyQueue.queue,
+  });
+
+  console.log('Requête de validation du token envoyée');
+
+  // Attendre la réponse
+  const response = await new Promise<{ userId: string } | null>((resolve) => {
+    channel.consume(replyQueue.queue, (message) => {
+      if (message) {
+        const response = JSON.parse(message.content.toString());
+        channel.ack(message);
+        resolve(response);
+      }
+    }, { noAck: false });
+  });
+
+  // Fermer la connexion
+  setTimeout(() => {
+    connection.close();
+  }, 500);
+
+  return response;
+}
+
+export async function processPayment(ticketId: string, price: number | null): Promise<boolean> {
+  const connection = await amqp.connect(RABBITMQ_URL);
+  const channel = await connection.createChannel();
+
+  // Déclarer une file d'attente de réponse temporaire
+  const replyQueue = await channel.assertQueue('', { exclusive: true });
+
+  // Envoyer la requête de paiement
+  const paymentRequest = { ticketId, price };
+  channel.sendToQueue(QUEUE_NAME_PAYMENT, Buffer.from(JSON.stringify(paymentRequest)), {
+    replyTo: replyQueue.queue,
+  });
+
+  console.log(`Requête de paiement envoyée pour le billet ID : ${ticketId}`);
+
+  // Attendre la réponse
+  const response = await new Promise<boolean>((resolve) => {
+    channel.consume(replyQueue.queue, (message) => {
+      if (message) {
+        const paymentSuccess = JSON.parse(message.content.toString());
+        channel.ack(message);
+        resolve(paymentSuccess);
+      }
+    }, { noAck: false });
+  });
+
+  // Fermer la connexion
+  setTimeout(() => {
+    connection.close();
+  }, 500);
+
+  return response;
 }
