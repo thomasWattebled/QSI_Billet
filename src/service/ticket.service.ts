@@ -12,6 +12,13 @@ export class TicketsService {
     this.ticketsRepository = new TicketRepository();
   }
 
+
+
+  async getTicketById(ticketId: string): Promise<Ticket | null> {
+
+    return this.ticketsRepository.findTicketById(ticketId);
+
+  }
   /**
    * Achat d'un billet
    */

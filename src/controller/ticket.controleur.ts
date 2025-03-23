@@ -5,6 +5,31 @@ import { validateTokenWithUserService } from '../rabbitMQ/producer';
 const ticketsService = new TicketsService();
 
 export class TicketsController {
+
+  async getTicket(req: Request, res: Response): Promise<void> {
+    const { ticketId } = req.params;
+
+    try {
+      const ticket = await ticketsService.getTicketById(ticketId);
+
+      if (!ticket) {
+        res.status(404).json({ message: 'Billet non trouvé' });
+        return;
+      }
+
+      res.status(200).json(ticket);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(500).json({ message: 'Erreur lors de la récupération du billet', error: error.message });
+      } else {
+        res.status(500).json({ message: 'Erreur inconnue lors de la récupération du billet' });
+      }
+    }
+  }
+
+
+
+
   async purchaseTicket(req: Request, res: Response) {
     const { concertId } = req.body;
     const token = req.headers.authorization?.split(' ')[1]; 
@@ -98,6 +123,40 @@ export class TicketsController {
       }
     }
   }
+
+  async listTickets(req: Request, res: Response): Promise<void> {
+      const { userId } = req.params;
+  
+      try {
+        const tickets = await ticketsService.listTicketsByUser(userId);
+        res.status(200).json(tickets);
+      } catch (error) {
+        if (error instanceof Error) {
+          res.status(500).json({ message: 'Erreur lors de la récupération des billets', error: error.message });
+        } else {
+          res.status(500).json({ message: 'Erreur inconnue lors de la récupération des billets' });
+        }
+      }
+    }
+  
+  async deleteTicket(req: Request, res: Response): Promise<void> {
+      const { ticketId } = req.params;
+  
+      try {
+        await ticketsService.deleteTicket(ticketId);
+        res.status(204).send(); // 204 No Content
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.message === 'Billet non trouvé') {
+            res.status(404).json({ message: error.message });
+          } else {
+            res.status(500).json({ message: 'Erreur lors de la suppression du billet', error: error.message });
+          }
+        } else {
+          res.status(500).json({ message: 'Erreur inconnue lors de la suppression du billet' });
+        }
+      }
+    }
 
 
 

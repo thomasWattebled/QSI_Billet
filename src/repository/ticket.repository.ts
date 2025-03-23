@@ -5,6 +5,12 @@ const prisma = new PrismaClient();
 
 export class TicketRepository {
 
+  async findTicketById(ticketId: string) {
+    return prisma.ticket.findUnique({
+      where: { ticketId },
+    });
+  }
+
   async createTicket(concertId: string, ownerId: string, price:number|null): Promise<Ticket> {
     return prisma.ticket.create({
       data: {
