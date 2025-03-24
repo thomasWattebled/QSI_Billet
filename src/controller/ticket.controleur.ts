@@ -31,8 +31,8 @@ export class TicketsController {
 
 
   async purchaseTicket(req: Request, res: Response) {
-    const { concertId } = req.body;
-    const token = req.headers.authorization?.split(' ')[1]; 
+    const concertId  = req.params.concertId;
+    /*const token = req.headers.authorization?.split(' ')[1]; 
 
     if (!token) {
       return res.status(401).json({ message: 'Token manquant' });
@@ -44,8 +44,8 @@ export class TicketsController {
         return res.status(401).json({ message: 'Token invalide' });
       }
       const userId = isValid.userId;
-
-      const ticket = await ticketsService.purchaseTicket(concertId, userId);
+*/try{
+      const ticket = await ticketsService.purchaseTicket(concertId, '1');
       res.status(201).json(ticket);
     } catch (error) {
       if(error instanceof Error){ 
