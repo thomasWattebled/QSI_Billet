@@ -1,7 +1,8 @@
 import { Ticket } from '../entity/ticket.entity';
 import { TicketRepository } from '../repository/ticket.repository';
 import { PrismaClient,TicketStatus} from '@prisma/client';
-import { sendConcertRequest, sendOwnerRequest, processPayment } from '../rabbitMQ/producer';
+import { sendConcertRequest } from '../rabbitMQ/producer';
+import { sendUserId } from '../rabbitMQ/verifyUser';
 
 const prisma = new PrismaClient();
 
@@ -83,8 +84,8 @@ export class TicketsService {
     if (ticket.status !== TicketStatus.CREATED) throw new Error('Transfert impossible');
 
     // Le nouveau propriétaire existe t-il ?
-    const newOwner = await sendOwnerRequest(newOwnerId);
-    if (!newOwner) throw new Error('Nouveau propriétaire invalide');
+      const ExistNewOnerID = await sendUserId(newOwnerId);
+    if (!ExistNewOnerID) throw new Error('Nouveau propriétaire invalide');
 
     return prisma.ticket.update({
       where: { ticketId },

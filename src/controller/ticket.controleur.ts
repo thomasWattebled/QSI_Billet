@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { TicketsService } from '../service/ticket.service';
-import { validateTokenWithUserService } from '../rabbitMQ/producer';
+import { validateTokenWithUserService } from '../rabbitMQ/validateJWT_Token';
+
 
 const ticketsService = new TicketsService();
+
 
 export class TicketsController {
 
@@ -32,20 +34,18 @@ export class TicketsController {
 
   async purchaseTicket(req: Request, res: Response) {
     const concertId  = req.params.concertId;
-    /*const token = req.headers.authorization?.split(' ')[1]; 
+    const token = req.headers.authorization?.split(' ')[1]; 
 
     if (!token) {
       return res.status(401).json({ message: 'Token manquant' });
     }
     try {
       const isValid = await validateTokenWithUserService(token);
-
       if (!isValid) {
         return res.status(401).json({ message: 'Token invalide' });
       }
       const userId = isValid.userId;
-*/try{
-      const ticket = await ticketsService.purchaseTicket(concertId, '1');
+      const ticket = await ticketsService.purchaseTicket(concertId, userId);
       res.status(201).json(ticket);
     } catch (error) {
       if(error instanceof Error){ 
