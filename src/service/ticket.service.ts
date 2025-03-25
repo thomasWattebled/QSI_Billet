@@ -1,82 +1,124 @@
 import { Ticket } from '../entity/ticket.entity';
-import { TicketsRepository } from '../repository/ticket.repository';
-import { PrismaClient } from '@prisma/client';
-import { sendConcertRequest, sendOwnerRequest} from '../rabbitMQ/producer'
+import { TicketRepository } from '../repository/ticket.repository';
+import { PrismaClient,TicketStatus} from '@prisma/client';
+import { sendConcertRequest, sendOwnerRequest, processPayment } from '../rabbitMQ/producer';
 
 const prisma = new PrismaClient();
 
-
 export class TicketsService {
-  private ticketsRepository: TicketsRepository;
+  private ticketsRepository: TicketRepository;
 
   constructor() {
-    this.ticketsRepository = new TicketsRepository();
+    this.ticketsRepository = new TicketRepository();
   }
 
+
+
+  async getTicketById(ticketId: string): Promise<Ticket | null> {
+
+    return this.ticketsRepository.findTicketById(ticketId);
+
+  }
+  /**
+   * Achat d'un billet
+   */
   async purchaseTicket(concertId: string, userId: string): Promise<Ticket> {
-    // Vérifier si le concert existe via RabbitMQ
     const concert = await sendConcertRequest(concertId);
-    if (!concert) {
-      throw new Error('Concert non trouvé');
-    }
+    if (!concert) throw new Error('Concert non trouvé');
 
-    const ticket = await this.ticketsRepository.createTicket(concertId, userId);
+    if (!concert) throw new Error('Concert introuvable ou supprimé');
+    const price = concert.price;
+    const ticket =await this.ticketsRepository.createTicket(concertId, userId, price);
+    /*const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
+
+    if (!paymentSuccess) {
+      await this.ticketsRepository.deleteTicket(ticket.ticketId);
+      throw new Error('Paiement échoué');
+    }*/
+
     return ticket;
+
   }
 
-
+  /**
+   * Remboursement d'un billet
+   */
   async refundTicket(ticketId: string): Promise<Ticket> {
-    const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
-    if (!ticket) {
-      throw new Error('Billet non trouvé');
-    }
-    if (ticket.repayed || ticket.canceled || ticket.used) {
-      throw new Error('Billet déjà remboursé ou annulé ou tuilisé');
-    }
-
-    const updatedTicket:Ticket = await prisma.ticket.update({
-      where: { ticketId },
-      data: { repayed: true, canceled: true },
-    });
-
-    return updatedTicket;
+    return this.ticketsRepository.refundTicket(ticketId);
   }
 
+  /**
+   * Utilisation d'un billet à l'entrée du concert
+   */
   async useTicket(ticketId: string): Promise<Ticket> {
-    const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
-    if (!ticket) {
-      throw new Error('Billet non trouvé');
-    }
-    if (ticket.used) {
-      throw new Error('Billet déjà utilisé');
-    }
-    const updatedTicket:Ticket = await prisma.ticket.update({
-      where: { ticketId },
-      data: { used: true },
+    const ticket = await prisma.ticket.findUnique({
+      where: { ticketId, deletedAt: null },
     });
-    return updatedTicket;
+  
+    if (!ticket) throw new Error('Billet non trouvé');
+    if (ticket.status !== TicketStatus.CREATED) throw new Error('Billet invalide pour l\'entrée');
+  
+    return prisma.ticket.update({
+      where: { ticketId },
+      data: { status: TicketStatus.USED }
+    });
   }
 
+  /**
+   * Annulation d'un billet
+   */
+  async cancelTicket(ticketId: string): Promise<Ticket> {
+    const ticket = await prisma.ticket.findUnique({ where: { ticketId, deletedAt: null } });
+    if (!ticket) throw new Error('Billet non trouvé');
 
+    return prisma.ticket.update({
+      where: { ticketId },
+      data: { status: TicketStatus.CANCELED }
+    });
+  }
+
+  /**
+   * Transfert d'un billet vers un nouvel utilisateur
+   */
   async transferTicket(ticketId: string, newOwnerId: string): Promise<Ticket> {
-    const ticket = await prisma.ticket.findUnique({ where: { ticketId } });
-    if (!ticket) {
-      throw new Error('Billet non trouvé');
-    }
+    const ticket = await prisma.ticket.findUnique({ where: { ticketId, deletedAt: null } });
+    if (!ticket) throw new Error('Billet non trouvé');
+    if (ticket.status !== TicketStatus.CREATED) throw new Error('Transfert impossible');
 
-    const newOwner = await await sendOwnerRequest(newOwnerId);
-    if (!newOwner) {
-      throw new Error('Nouveau propriétaire invalide');
-    }
+    // Le nouveau propriétaire existe t-il ?
+    const newOwner = await sendOwnerRequest(newOwnerId);
+    if (!newOwner) throw new Error('Nouveau propriétaire invalide');
 
-    await prisma.ticket.update({
+    return prisma.ticket.update({
       where: { ticketId },
-      data: { canceled: true },
+      data: { ownerId: newOwnerId }
     });
-
-    const newTicket:Ticket = await this.ticketsRepository.createTicket(ticket.concertId, newOwnerId);
-    return newTicket;
   }
 
+  /**
+   * Expiration automatique d'un billet (exécution via un job planifié)
+   */
+  async expireTicket(ticketId: string): Promise<Ticket> {
+    const ticket = await prisma.ticket.findUnique({ where: { ticketId, deletedAt: null } });
+    if (!ticket) throw new Error('Billet non trouvé');
 
+    return prisma.ticket.update({
+      where: { ticketId },
+      data: { status: TicketStatus.EXPIRED }
+    });
+  }
+
+  /**
+   * Liste des billets d'un utilisateur
+   */
+  async listTicketsByUser(userId: string): Promise<Ticket[]> {
+    return this.ticketsRepository.listTicketsByUser(userId);
+  }
+
+  /**
+   * Suppression logique d'un billet
+   */
+  async deleteTicket(ticketId: string): Promise<void> {
+    await this.ticketsRepository.deleteTicket(ticketId);
+  }
 }
