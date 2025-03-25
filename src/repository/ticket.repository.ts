@@ -39,18 +39,18 @@ export class TicketRepository {
   async refundTicket(ticketId: string): Promise<Ticket> {
     const ticket = await prisma.ticket.findUnique({
       where: { ticketId, deletedAt: null },
-      include: { concert: true }
     });
 
     if (!ticket) throw new Error('Billet non trouvé');
     if (ticket.status !== TicketStatus.CREATED) throw new Error('Remboursement impossible');
 
     const now = new Date();
+    /*
     const concertDate = new Date(ticket.concert.date);
     const hoursBeforeConcert = (concertDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
     if (hoursBeforeConcert < 48) throw new Error('Remboursement impossible à moins de 48h du concert');
-
+*/
     return prisma.ticket.update({
       where: { ticketId, deletedAt: null },
       data: { status: TicketStatus.REFUNDED, isAvailable: true } // Permet la revente

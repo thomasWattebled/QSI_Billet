@@ -27,15 +27,14 @@ export class TicketsService {
     if (!concert) throw new Error('Concert non trouvé');
 
     if (!concert) throw new Error('Concert introuvable ou supprimé');
-    if (concert.tickets.length >= concert.maxTickets) throw new Error('Plus de billets disponibles');
     const price = concert.price;
     const ticket =await this.ticketsRepository.createTicket(concertId, userId, price);
-    const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
+    /*const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
 
     if (!paymentSuccess) {
       await this.ticketsRepository.deleteTicket(ticket.ticketId);
       throw new Error('Paiement échoué');
-    }
+    }*/
 
     return ticket;
 

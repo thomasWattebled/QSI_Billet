@@ -24,7 +24,6 @@ enum TicketStatus {
 model User {
   userId  String   @id @default(uuid())
   name    String
-  tickets Ticket[]
 }
 
 model Concert {
@@ -35,7 +34,6 @@ model Concert {
   price      Float?
   maxTickets Int
   deletedAt  DateTime?
-  tickets    Ticket[]
 }
 
 model Ticket {
@@ -48,6 +46,4 @@ model Ticket {
   deletedAt  DateTime?
   price      Float?
   updatedAt  DateTime     @updatedAt
-  concert    Concert      @relation(fields: [concertId], references: [id])
-  owner      User         @relation(fields: [ownerId], references: [userId])
 }

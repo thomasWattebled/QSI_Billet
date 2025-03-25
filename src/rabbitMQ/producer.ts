@@ -27,10 +27,11 @@ export async function sendConcertRequest(concertId: string):Promise<any> {
       channel.consume(replyQueue.queue, (message) => {
         if (message) {
           if (message.properties.correlationId === correlationId){
-            console.log('✅ Recuperation du concert')
+            
             const concert = JSON.parse(message.content.toString());
             channel.ack(message);
             resolve(concert);
+            console.log('✅ Achat de billet reussis')
           }
           
         }
