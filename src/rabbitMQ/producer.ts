@@ -69,6 +69,7 @@ export async function processPayment(ticketId: string, price: number | null): Pr
         const paymentSuccess = JSON.parse(message.content.toString());
         channel.ack(message);
         resolve(paymentSuccess);
+        console.log('✅ Paiement réussi')
       }
     }, { noAck: false });
   });

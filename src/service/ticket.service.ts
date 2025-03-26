@@ -1,7 +1,7 @@
 import { Ticket } from '../entity/ticket.entity';
 import { TicketRepository } from '../repository/ticket.repository';
 import { PrismaClient,TicketStatus} from '@prisma/client';
-import { sendConcertRequest } from '../rabbitMQ/producer';
+import { processPayment, sendConcertRequest } from '../rabbitMQ/producer';
 import { sendUserId } from '../rabbitMQ/verifyUser';
 
 const prisma = new PrismaClient();
@@ -26,13 +26,13 @@ export class TicketsService {
 
     if (!concert) throw new Error('Concert introuvable ou supprimé');
     const price = concert.price;
-    const ticket =await this.ticketsRepository.createTicket(concertId, userId, price);
-    /*const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
+    const ticket =await this.ticketsRepository.createTicket(concertId, userId, 100);
+    const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
 
     if (!paymentSuccess) {
       await this.ticketsRepository.deleteTicket(ticket.ticketId);
       throw new Error('Paiement échoué');
-    }*/
+    }
 
     return ticket;
 
