@@ -1,11 +1,16 @@
 import express, { Request, Response } from 'express';
 import { TicketsController } from './controller/ticket.controleur';
+import cors from 'cors';
 
 const app = express();
 const port = 3030;
 const ticketsController = new TicketsController();
 
-app.use(express.json());
+const corsOption = {origin: "http://localhost:3001", 
+  methods: ["GET", "POST", "PUT", "DELETE"], 
+  allowedHeaders: ["Content-Type", "Authorization"] }
+
+app.use(cors(corsOption));
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello, TypeScript with Express!');
