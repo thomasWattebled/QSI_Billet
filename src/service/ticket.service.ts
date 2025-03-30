@@ -22,11 +22,12 @@ export class TicketsService {
    */
   async purchaseTicket(concertId: string, userId: string): Promise<Ticket> {
     const concert = await sendConcertRequest(concertId);
+    console.log(concert)
     if (!concert) throw new Error('Concert non trouvé');
 
     if (!concert) throw new Error('Concert introuvable ou supprimé');
-    const price = concert.price;
-    const ticket =await this.ticketsRepository.createTicket(concertId, userId, 100);
+    const price = concert[0].price;
+    const ticket =await this.ticketsRepository.createTicket(concertId, userId, price);
     const paymentSuccess = await processPayment(ticket.ticketId, ticket.price );
 
     if (!paymentSuccess) {
