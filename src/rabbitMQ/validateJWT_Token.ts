@@ -21,17 +21,23 @@ export async function validateTokenWithUserService(token: string): Promise<{ use
         replyTo: queue,
       });
 
-  console.log('Requête de validation du token envoyée');
+  console.log('✅ Requête de validation du token envoyée');
 
   // Attendre la réponse
   const response = await new Promise<{ userId: string } | null>((resolve) => {
-    console.log(`📡 Tentative d'enregistrement du consume() sur la file : ${queue}`);
     channel.consume(queue, (message) => {
       console.log(`📡 En attente d'une réponse dans la file : ${queue}`);
       if (message) {
         if(message.properties.correlationId === correlationId) {
         const response = JSON.parse(message.content.toString());
         channel.ack(message);
+        if(response.message==='Token invalide ou expiré'){
+          console.log('❌ Token invalide ou expiré');
+          resolve(null);
+        }
+        else {
+          console.log('✅ Token validé');
+        }
         resolve(response);
       }
     }}, { noAck: false });
@@ -43,3 +49,4 @@ export async function validateTokenWithUserService(token: string): Promise<{ use
 
   return response;
 }
+

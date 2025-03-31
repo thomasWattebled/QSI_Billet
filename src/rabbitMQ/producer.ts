@@ -7,6 +7,8 @@ const QUEUE_NAME_PAYMENT = 'process_payment';
 
 export async function sendConcertRequest(concertId: string):Promise<any> {
   try {
+    console.log(' ');
+    console.log(' ');
     const connection = await amqp.connect(RABBITMQ_URL);
     const channel = await connection.createChannel();
     const replyQueue = await channel.assertQueue('', { exclusive: true });
@@ -29,7 +31,7 @@ export async function sendConcertRequest(concertId: string):Promise<any> {
             const concert = JSON.parse(message.content.toString());
             channel.ack(message);
             resolve(concert);
-            console.log('✅ Achat de billet reussis')
+            console.log('✅ Recuperation du concert avec succes')
           }
           
         }
@@ -46,6 +48,8 @@ export async function sendConcertRequest(concertId: string):Promise<any> {
 
 
 export async function processPayment(ticketId: string, price: number | null): Promise<boolean> {
+  console.log(' ');
+  console.log(' ');
   const connection = await amqp.connect(RABBITMQ_URL);
   const channel = await connection.createChannel();
 
@@ -65,7 +69,6 @@ export async function processPayment(ticketId: string, price: number | null): Pr
   const response = await new Promise<boolean>((resolve) => {
     channel.consume(replyQueue.queue, (message) => {
       if (message) {
-        console.log(`📩 Message reçu avec correlationId : ${message.properties.correlationId}`);
         const paymentSuccess = JSON.parse(message.content.toString());
         channel.ack(message);
         resolve(paymentSuccess);

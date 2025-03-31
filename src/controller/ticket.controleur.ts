@@ -32,19 +32,20 @@ export class TicketsController {
 
   async purchaseTicket(req: Request, res: Response) {
     const concertId  = req.params.concertId;
-    const token = req.headers.authorization?.split(' ')[1]; 
-/*
+    const token = req.headers.authorization;
     if (!token) {
       return res.status(401).json({ message: 'Token manquant' });
     }
     try {
+      console.log("✅ token recu")
+
       const isValid = await validateTokenWithUserService(token);
       if (!isValid) {
         return res.status(401).json({ message: 'Token invalide' });
       }
-      const userId = isValid.userId;*/
-      try{
-      const ticket = await ticketsService.purchaseTicket(concertId, '1');
+      const userId = isValid.userId;
+  
+      const ticket = await ticketsService.purchaseTicket(concertId, userId);
       res.status(201).json(ticket);
     } catch (error) {
       if(error instanceof Error){ 
@@ -102,9 +103,10 @@ export class TicketsController {
   }
 
   async transferTicket(req: Request, res: Response) {
+
     const { ticketId } = req.params;
     const { newOwnerId } = req.body;
-
+    console.log(newOwnerId)
     try {
       const ticket = await ticketsService.transferTicket(ticketId, newOwnerId);
       res.status(200).json(ticket);
@@ -124,7 +126,7 @@ export class TicketsController {
   }
 
   async listTickets(req: Request, res: Response): Promise<void> {
-      const { userId } = req.params;
+    const userId  = req.params.userId;
   
       try {
         const tickets = await ticketsService.listTicketsByUser(userId);
@@ -139,7 +141,7 @@ export class TicketsController {
     }
   
   async deleteTicket(req: Request, res: Response): Promise<void> {
-      const { ticketId } = req.params;
+    const { ticketId } = req.params;
   
       try {
         await ticketsService.deleteTicket(ticketId);
